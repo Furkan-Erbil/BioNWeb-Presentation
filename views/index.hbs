@@ -1,0 +1,157 @@
+<link rel="stylesheet" href="/stylesheets/style.css">
+
+<div id="myDIV" class="header">
+  <img src="/stylesheets/WebVirus.png">
+  <h2 style="margin:5px">Patients-List</h2>
+  <input type="text" id="myInput" placeholder="Patient name">
+  <input type="text" id="myAge" placeholder="Age">
+  <select name="VirusType" id="myVirus">
+     <option value="" selected disabled hidden>Choose the virus</option>
+     <option value="Web-Virus">Web-Virus</option>
+     <option value="Web-Virus B.1.1.7">Web-Virus B.1.1.7</option>
+     <option value="Web-Virus B.1.351">Web-Virus B.1.351</option>
+     <option value="Web-Virus B.1.1.28">Web-Virus B.1.1.28</option>
+  </select>
+  <span onclick="newElement()" class="addBtn">Add</span>
+</div>
+
+<ul id="myUL">
+  <!-- Patients is from getAllPatients, otherwise it wont show items when reloading page!  -->
+  {{#each Patients}}
+        <li {{#if this.status}} class = "checked" {{/if}} id= {{this._id}} > 
+            Name: {{this.name}} 
+            <span id="age"> Age: {{this.age}} </span> 
+            <span id="virus"> Virus: {{this.virus}} </span>
+        </li>
+  {{/each}}
+</ul>
+
+<script>
+// Create a "close" button and append it to each list item
+var myNodelist = document.getElementsByTagName("LI");
+var i;
+for (i = 0; i < myNodelist.length; i++) {
+  var span = document.createElement("SPAN");
+  var txt = document.createTextNode("\u00D7");
+  span.className = "close";
+  span.appendChild(txt);
+  myNodelist[i].appendChild(span);
+}
+
+// Click on a close button to hide the current list item
+var close = document.getElementsByClassName("close");
+var i;
+for (i = 0; i < close.length; i++) {
+  close[i].onclick = function() {
+    var div = this.parentElement;
+    console.log(div.id)
+    deletePatient(div.id)
+    div.style.display = "none";
+  }
+}
+
+// Add a "checked" symbol when clicking on a list item
+var list = document.querySelector('ul');
+list.addEventListener('click', function(ev) {
+  if (ev.target.tagName === 'LI') {
+    ev.target.classList.toggle('checked');
+    togglePatient(ev.target.id)
+  }
+}, false);
+
+// Create a new list item when clicking on the "Add" button
+function newElement() {
+  var li = document.createElement("li");
+  var name = document.getElementById("myInput").value;
+  var age = document.getElementById("myAge").value;
+  var virus = document.getElementById("myVirus").value;
+
+  //give some style when input
+  var nameText = document.createTextNode("Name: " + name);
+  var ageText = document.createTextNode("Age: " + age);
+  var virusText = document.createTextNode("Virus: " + virus);
+
+  //add age span
+  var ageSpan = document.createElement("span");
+  ageSpan.id = "age";
+  ageSpan.appendChild(ageText);
+
+  //add virus span
+  var virusSpan = document.createElement("span");
+  virusSpan.id = "virus";
+  virusSpan.appendChild(virusText);
+
+
+  li.appendChild(nameText);
+  li.appendChild(ageSpan);
+  li.appendChild(virusSpan);
+
+
+  if (name === '' || age <= 0 || isNaN(age)) {
+    alert("Provide name and correct age");
+  } else {
+    let res =  addPatient(name, age, virus);
+    res.then(response => response.json())
+				.then(result => {
+          console.log(result);
+          li.id = result.id
+					document.getElementById("myUL").appendChild(li);
+          document.getElementById("myInput").value = "";
+          document.getElementById("myAge").value ="";
+          document.getElementById("myVirus").value ="";
+
+
+          var span = document.createElement("SPAN");
+          var txt = document.createTextNode("\u00D7");
+          span.className = "close";
+          span.appendChild(txt);
+          li.appendChild(span);
+
+          for (i = 0; i < close.length; i++) {
+            close[i].onclick = function() {
+              var div = this.parentElement;
+              console.log(div.id)
+              deletePatient(div.id)
+              div.style.display = "none";
+            }
+          }
+				});
+    
+    
+  }
+  
+}
+
+function addPatient(patient, age, virus){
+  return  fetch('/Patients/add',{
+			method: 'post',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({PatientName: patient, PatientAge: age, PatientVirus: virus}),
+		});
+}
+
+function deletePatient(id){
+   fetch('/Patients/delete',{
+			method: 'post',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({id: id}),
+		})
+}
+
+
+
+function togglePatient(id){
+   fetch('/Patients/changestatus',{
+			method: 'post',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({id: id}),
+		});
+}
+</script>
+
